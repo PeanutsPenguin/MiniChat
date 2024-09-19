@@ -1,11 +1,11 @@
-#include "chatServer.h"
+#include "Network/server.h"
 
-constexpr int minorVersion = 2;
-constexpr int majorVersion = 2;
 
 int main()
 {
-	chatServer currentServ = chatServer(majorVersion, minorVersion);
+	Server serv = Server();
 
-	return 0;
+	serv.CreateBindListen("27015");
+
+	serv.pollCall();
 }
