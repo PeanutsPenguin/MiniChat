@@ -3,12 +3,13 @@
 
 client::client()
 {
-	WSADATA data;
-	int resultCheck = WSAStartup(MAKEWORD(2, 2), &data);
+	WSADATA Widta;
+	int resultCheck = WSAStartup(MAKEWORD(2, 2), &Widta);
 	if (resultCheck)
 		errorHandler::reportWindowsError(TEXT("WSAStartup"), resultCheck);
 
-	this->sckt = INVALID_SOCKET;
+    this->data = INVALID_SOCKET;
+    this->sckt_event = WSACreateEvent();
 }
 
 void client::CreateAndConnect(const char* ipAdress, const char* port)
@@ -26,17 +27,21 @@ void client::CreateAndConnect(const char* ipAdress, const char* port)
 	if (resultCheck != 0)
 		errorHandler::reportWindowsError("getaddrinfo failed: %d\n", resultCheck);
 
-	this->sckt = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	this->data = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
-	if (this->sckt == INVALID_SOCKET) {
-		errorHandler::reportWindowsError("Error at socket(): %ld\n", WSAGetLastError());
+	if (this->data == INVALID_SOCKET) {
+		errorHandler::reportWindowsError("Error at socket(): \n", WSAGetLastError());
 		freeaddrinfo(res);
 	}
 
-	connect(this->sckt, res->ai_addr, (int)res->ai_addrlen);
+	if (connect(this->data, res->ai_addr, (int)res->ai_addrlen) < 0)
+		errorHandler::reportWindowsError("UNABLE TO CONNECT\n", WSAGetLastError());
+	else
+		errorHandler::consolPrint("SUCCESSFULLY CONNECTED\n");
 
 	freeaddrinfo(res);
 }
+
 void client::createEvent()
 {
 	WSAEventSelect(this->data, this->sckt_event, FD_READ);
@@ -75,6 +80,6 @@ HANDLE client::getEvent()
 
 client::~client()
 {
-	closesocket(this->sckt);
+	closesocket(this->data);
 	WSACleanup();
 }
