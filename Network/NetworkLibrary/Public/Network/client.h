@@ -6,6 +6,7 @@ class client
 
 	void CreateAndConnect(const char* ipAdress, const char* port);
 
+	void createEvent();
 	~client();
 
 private:

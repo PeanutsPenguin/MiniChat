@@ -37,6 +37,10 @@ void client::CreateAndConnect(const char* ipAdress, const char* port)
 
 	freeaddrinfo(res);
 }
+void client::createEvent()
+{
+	WSAEventSelect(this->data, this->sckt_event, FD_READ);
+}
 
 client::~client()
 {
