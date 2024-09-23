@@ -42,6 +42,12 @@ void client::createEvent()
 	WSAEventSelect(this->data, this->sckt_event, FD_READ);
 }
 
+HANDLE client::getEvent()
+{
+	return this->sckt_event;
+}
+
+
 client::~client()
 {
 	closesocket(this->sckt);
