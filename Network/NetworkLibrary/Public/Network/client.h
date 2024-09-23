@@ -11,5 +11,6 @@ class client
 	~client();
 
 private:
-	UINT64 sckt;
+	uint64_t data;
+	HANDLE sckt_event;
 };
