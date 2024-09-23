@@ -7,6 +7,7 @@ class client
 	void CreateAndConnect(const char* ipAdress, const char* port);
 
 	void createEvent();
+	void sendMessaage(const char* msg, int length);
 	HANDLE getEvent();
 	~client();
 

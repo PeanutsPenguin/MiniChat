@@ -42,6 +42,14 @@ void client::createEvent()
 	WSAEventSelect(this->data, this->sckt_event, FD_READ);
 }
 
+void client::sendMessaage(const char* msg, int length)
+{
+    int byteSent = send(this->data, msg, length, 0);
+
+    if (byteSent < 0)
+		errorHandler::reportWindowsError("SEND CLIENT ERR :", WSAGetLastError());
+}
+
 HANDLE client::getEvent()
 {
 	return this->sckt_event;
