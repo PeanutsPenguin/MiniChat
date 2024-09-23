@@ -50,6 +50,23 @@ void client::sendMessaage(const char* msg, int length)
 		errorHandler::reportWindowsError("SEND CLIENT ERR :", WSAGetLastError());
 }
 
+void client::receivemessage()
+{
+	char buf[512];
+
+	int byteReceive = recv(this->data, buf, 512, 0);
+	
+	if (byteReceive <= 0)
+		errorHandler::reportWindowsError("RECEIVE CLIENT ERR :", WSAGetLastError());
+	else
+	{
+		buf[byteReceive - (byteReceive == sizeof buf ? 1 : 0)] = '\0';
+		errorHandler::consolPrint(buf);
+	}
+	ResetEvent(this->sckt_event);
+	errorHandler::consolPrint("\n");
+}
+
 HANDLE client::getEvent()
 {
 	return this->sckt_event;

@@ -8,6 +8,9 @@ class client
 
 	void createEvent();
 	void sendMessaage(const char* msg, int length);
+
+	void receivemessage();
+
 	HANDLE getEvent();
 	~client();
 
