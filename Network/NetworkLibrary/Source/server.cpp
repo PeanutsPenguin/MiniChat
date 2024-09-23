@@ -127,6 +127,7 @@ void Server::pollCall()
 					{ 
 						buf[nbytes - (nbytes == sizeof buf ? 1 : 0)] = '\0';
 						errorHandler::consolPrint(buf);
+						errorHandler::consolPrint("\n");
 
 						for(int j = 0; j < this->fds.size(); j++)
 						{
@@ -136,10 +137,12 @@ void Server::pollCall()
 							{
 								if(send(dest_sckt, buf, nbytes, 0) == -1)
 								{
-									errorHandler::consolPrint("SEDN ERROR");
+									errorHandler::reportWindowsError(TEXT("SEND SERV ERROR"), WSAGetLastError());
 								}
 							}
 						}
+
+
 					}
 
 				}
