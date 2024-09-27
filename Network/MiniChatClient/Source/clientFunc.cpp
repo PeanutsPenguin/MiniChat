@@ -112,8 +112,20 @@ bool keyboardEvent(KEY_EVENT_RECORD input, std::stringstream* msg, client* newCl
 
         msg->str("");
     }
+    else 
+    {
+        *index += 1;
+        char key = (char)input.uChar.UnicodeChar;
+
+        if(key != NULL && key != '\0')
+        {
+            *msg << key;
+            std::cout << key;
+        }
     }
 
     return false;
 }
+
+
 
