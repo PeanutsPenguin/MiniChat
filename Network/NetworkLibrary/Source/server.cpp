@@ -166,8 +166,23 @@ bool Server::receiveMessage(uint64_t* newfd, char* buf, int bufSize)
 
 		return true;
 	}
+}
 
+void Server::sendMessagetoServ(uint64_t* sender, std::string msg)
+{
+	for (int i = 0; i < this->fds.size(); i++)
+	{
+		SOCKET dest_sckt = this->fds[i].fd;
 	
+		if (dest_sckt != this->ListenSocket4 && dest_sckt != *sender && dest_sckt != this->ListenSocket6)
+		{
+			if (send(dest_sckt, msg.c_str(), (int)msg.length(), 0) == -1)
+			{
+				errorHandler::reportWindowsError(TEXT("SEND TO SERV ERROR"), WSAGetLastError());
+				this->removeUser(i);
+}
+		}
+	}
 }
 
 	
