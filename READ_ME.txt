@@ -4,13 +4,13 @@ TO USE THE MNI CHAT FOLLOW THESE STEPS :
 
 1.Launch the server (double click on MiniChatServer.exe)
 
-2.If the server is correctly on, it should be written "SERVER'S OPEN" and the IPV4 & IPV6 to connect in the console
+2.If the server is correctly on, it should be written "SERVER'S OPEN" in the console
 
 3.Now open a client (double click on MiniChatClient.exe)
 
 4.If the client is correctly open it should ask you your username, write it and press enter.
 
-5.Now it should ask you for the ip of the server, you can one that the server printed just before.
+5.Now it should ask you for the ip of the server (it's set in local so you can use ::1 or 127.0.0.1).
 
 6. You have been successfully connected to the server, you can now send messages.
 

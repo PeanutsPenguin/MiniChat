@@ -17,6 +17,7 @@ Server::Server()
 void Server::CreateBindListen(const char* port)
 {
 	struct addrinfo* res = NULL, hints;
+	char ipstr[INET6_ADDRSTRLEN];
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -50,6 +51,11 @@ void Server::CreateBindListen(const char* port)
 
 	this->addPfds(this->ListenSocket4);
 
+	// convert the IP to a string and print it:
+	struct sockaddr_in* ipv4 = (struct sockaddr_in*)res->ai_addr;
+	inet_ntop(AF_INET, &(ipv4->sin_addr), ipstr, INET_ADDRSTRLEN);
+	printf("  IPV4: %s\n", ipstr);
+
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_STREAM;
@@ -81,6 +87,10 @@ void Server::CreateBindListen(const char* port)
 	}
 
 	this->addPfds(this->ListenSocket6);
+
+	struct sockaddr_in* ipv6 = (struct sockaddr_in*)res->ai_addr;
+	inet_ntop(AF_INET6, &(ipv6->sin_addr), ipstr, INET6_ADDRSTRLEN);
+	printf("  IPV6: %s\n", ipstr);
 
 	freeaddrinfo(res);
 }
