@@ -1,6 +1,5 @@
 #include "Network/server.h"
 
-
 int main()
 {
 	Server serv = Server();
@@ -8,4 +7,6 @@ int main()
 	serv.CreateBindListen("27015");
 
 	serv.pollCall();
+
+    return 0;
 }

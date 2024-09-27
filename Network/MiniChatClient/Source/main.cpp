@@ -2,19 +2,13 @@
 
 int main()
 {
-	std::string name = "";
+    client newClient = client();
 
-	printf("Enter a name : ");
+    std::string name = newClient.CreateAndConnect("27015");
 
-	std::cin >> name;
+    newClient.createReadEvent();
 
-	client newClient = client();
+    handleEvent(newClient, name);
 
-	newClient.CreateAndConnect("10.5.5.105", "27015");
-
-	newClient.createEvent();
-
-	handleEvent(newClient, name);
-
-	return 0;
+    return 0;
 }

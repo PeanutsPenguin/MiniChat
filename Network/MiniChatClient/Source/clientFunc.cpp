@@ -11,7 +11,6 @@ void handleEvent(client newClient, std::string name)
     if (hStdin == INVALID_HANDLE_VALUE)
         printf("HANDLER ERROR");
 
-
     DWORD readevents;
     INPUT_RECORD records[128];
     std::stringstream message;
