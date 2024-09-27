@@ -72,8 +72,13 @@ void handleEvent(client newClient, std::string name)
             case WINDOW_BUFFER_SIZE_EVENT:
                 break;
             }
+
+bool keyboardEvent(KEY_EVENT_RECORD input, std::stringstream* msg, client* newClient, std::string name, int* index)
+{
         }
         
     }
+
+    return false;
 }
 
