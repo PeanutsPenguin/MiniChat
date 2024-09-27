@@ -105,9 +105,10 @@ void client::CreateAndConnect(const char* ipAdress, const char* port)
 	return name;
 }
 
-void client::createEvent()
+HANDLE client::createReadEvent()
 {
-	WSAEventSelect(this->data, this->sckt_event, FD_READ);
+	WSAEventSelect(this->data, this->read_event, FD_READ | FD_CLOSE);
+	return this->read_event;
 }
 
 void client::sendMessaage(const char* msg, int length)
