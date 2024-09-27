@@ -120,21 +120,22 @@ void Server::removeUser(int index)
 	this->deleteUserName(index);
 		}
 
-		for(int i = 0; i < this->fds.size(); i++)
+void Server::newConnection(int* addrlen, uint64_t* newfd, int choice)
 		{
-			if (this->fds[i].revents & POLLIN)
-			{
-				if (fds[i].fd == this->ListenSocket)
-				{
-					addrlen = sizeof remoteaddr;
-					newfd = accept(this->ListenSocket, (struct sockaddr*)&remoteaddr, &addrlen);
+	struct sockaddr_storage remoteaddr;
 
+	*addrlen = sizeof remoteaddr;
 
-					if (newfd == -1)
-						errorHandler::consolPrint("accept ERROR\n");
+	if(choice == 4)
+		*newfd = accept(this->ListenSocket4, (struct sockaddr*)&remoteaddr, addrlen);
 					else
+		*newfd = accept(this->ListenSocket6, (struct sockaddr*)&remoteaddr, addrlen);
+
+	if (*newfd == -1)
+		errorHandler::reportWindowsError("accept ERROR\n", WSAGetLastError());
+	else
 					{
-						this->addPfds(newfd);
+		this->addPfds(*newfd);
 						errorHandler::consolPrint("NEW CONNECTION ON THE SERVER\n");
 					}
 				}
