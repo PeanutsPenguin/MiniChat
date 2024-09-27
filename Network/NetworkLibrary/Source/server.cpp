@@ -14,7 +14,6 @@ Server::Server()
 	this->ListenSocket6 = INVALID_SOCKET;
 }
 
-
 void Server::CreateBindListen(const char* port)
 {
 	struct addrinfo* res = NULL, hints;
@@ -66,8 +65,8 @@ void Server::CreateBindListen(const char* port)
 
 	if (this->ListenSocket6 == INVALID_SOCKET) {
 		errorHandler::reportWindowsError("Error at socket(): %ld\n", WSAGetLastError());
-	freeaddrinfo(res);
-}
+		freeaddrinfo(res);
+	}
 
 	resultCheck = bind(this->ListenSocket6, res->ai_addr, (int)res->ai_addrlen);
 	if (resultCheck == SOCKET_ERROR) {
@@ -107,48 +106,48 @@ void Server::addUserName(std::string name)
 }
 
 void Server::deleteUserName(int index)
-	{
+{
 	this->names.erase(std::next(this->names.begin(), index - 2));
 }
 
 void Server::removeUser(int index)
-		{
+{
 	closesocket(this->fds[index].fd);
 
 	this->removefds(index);
 
 	this->deleteUserName(index);
-		}
+}
 
 void Server::newConnection(int* addrlen, uint64_t* newfd, int choice)
-		{
+{
 	struct sockaddr_storage remoteaddr;
 
 	*addrlen = sizeof remoteaddr;
 
 	if(choice == 4)
 		*newfd = accept(this->ListenSocket4, (struct sockaddr*)&remoteaddr, addrlen);
-					else
+	else 
 		*newfd = accept(this->ListenSocket6, (struct sockaddr*)&remoteaddr, addrlen);
 
 	if (*newfd == -1)
 		errorHandler::reportWindowsError("accept ERROR\n", WSAGetLastError());
 	else
-					{
+	{
 		this->addPfds(*newfd);
-						errorHandler::consolPrint("NEW CONNECTION ON THE SERVER\n");
-					}
-				}
-				
+		errorHandler::consolPrint("NEW CONNECTION ON THE SERVER\n");
+	}
+}
+
 bool Server::receiveMessage(uint64_t* newfd, char* buf, int bufSize)
-				{
+{
 	int nbytes = recv(*newfd, buf, bufSize, 0);
 
 	if (nbytes <= 0)
-					{
-						if (nbytes == 0)
-							errorHandler::consolPrint("Connection closed\n");
-						else
+	{
+		if (nbytes == 0)
+			errorHandler::consolPrint("Connection closed\n");
+		else
 			errorHandler::reportWindowsError("RECEIVE ERROR\n", WSAGetLastError());
 
 		closesocket(*newfd);
@@ -173,14 +172,14 @@ void Server::sendMessagetoServ(uint64_t* sender, std::string msg)
 	for (int i = 0; i < this->fds.size(); i++)
 	{
 		SOCKET dest_sckt = this->fds[i].fd;
-	
+
 		if (dest_sckt != this->ListenSocket4 && dest_sckt != *sender && dest_sckt != this->ListenSocket6)
 		{
 			if (send(dest_sckt, msg.c_str(), (int)msg.length(), 0) == -1)
 			{
 				errorHandler::reportWindowsError(TEXT("SEND TO SERV ERROR"), WSAGetLastError());
 				this->removeUser(i);
-}
+			}
 		}
 	}
 }
@@ -192,7 +191,7 @@ void Server::newConnectionMsg(uint64_t* newfd, char* nameBuffer)
 		std::string name = nameBuffer;
 		std::string userThere = "User already there : ";
 		std::string justConnect = name + " just joined us";
-	
+
 		for (int j = 0; j < this->names.size(); j++)
 			userThere += this->names[j] + ", ";
 
@@ -204,8 +203,8 @@ void Server::newConnectionMsg(uint64_t* newfd, char* nameBuffer)
 		{
 			errorHandler::reportWindowsError(TEXT("SEND TO NEW USER ERROR"), WSAGetLastError());
 			this->removeUser((int)this->fds.size() - 1);
-}
-}
+		}
+	}
 }
 
 bool Server::clearServer(char* buf)
@@ -223,40 +222,85 @@ bool Server::clearServer(char* buf)
 				errorHandler::reportWindowsError("shutdown failed\n", WSAGetLastError());
 
 
-						closesocket(this->fds[i].fd);
+			closesocket(this->fds[i].fd);
 		}
 
 		closesocket(this->fds[0].fd);
 		closesocket(this->fds[1].fd);
 
 		return true;
-					}
+	}
 
 	return false;
 }
-					{ 
-						buf[nbytes - (nbytes == sizeof buf ? 1 : 0)] = '\0';
-						errorHandler::consolPrint(buf);
+
+void Server::pollCall()
+{
+	SOCKET newfd;        
+	socklen_t addrlen;
+	std::string buf;
+	char nameBuffer[100];
+	char receiveBuf[512];
+
+	for(;;)
+	{
+		int poll_count = WSAPoll(&this->fds[0], (u_long)this->fds.size(), -1);
+
+		if(poll_count == -1)
+		{
+			errorHandler::reportWindowsError("POLL ERROR", WSAGetLastError());
+			break;
+		}
+
+		for(int i = 0; i < this->fds.size(); i++)
+		{
+			if(this->fds[i].revents & POLLERR | this->fds[i].revents & POLLHUP)
+			{
+				std::string msg = this->names[i - 2];
+				this->removeUser(i);
+				msg += " has been disconnected";
+
+				this->sendMessagetoServ(&this->ListenSocket4, msg);
+			}
+				
+
+			else if (this->fds[i].revents & POLLIN)
+			{
+				if (fds[i].fd == this->ListenSocket4)
+				{
+					this->newConnection(&addrlen, &newfd, 4);
+
+					this->newConnectionMsg(&newfd, &nameBuffer[0]);
+				}
+
+				else if (fds[i].fd == this->ListenSocket6)
+				{
+					this->newConnection(&addrlen, &newfd, 6);
+
+					this->newConnectionMsg(&newfd, &nameBuffer[0]);
+				}
+				
+				else 
+				{
+					SOCKET sender = this->fds[i].fd;
+
+					if (this->receiveMessage(&this->fds[i].fd, &receiveBuf[0], 512))
+					{
+						if (this->clearServer(receiveBuf))
+							return;
+
+						buf = this->names[i - 2] + " > " + receiveBuf;
+
+						errorHandler::consolPrint(buf.c_str());
 						errorHandler::consolPrint("\n");
 
-						for(int j = 0; j < this->fds.size(); j++)
-						{
-							SOCKET dest_sckt = this->fds[j].fd;
-
-							if(dest_sckt != this->ListenSocket && dest_sckt != sender)
-							{
-								if(send(dest_sckt, buf, nbytes, 0) == -1)
-								{
-									errorHandler::reportWindowsError(TEXT("SEND SERV ERROR"), WSAGetLastError());
-								}
-							}
-						}
-
-
+						this->sendMessagetoServ(&sender, buf);
 					}
-
+					else
+						this->deleteUserName(i);
 				}
 			}
+			
 		}
 	}
 
@@ -264,8 +308,6 @@ bool Server::clearServer(char* buf)
 
 Server::~Server()
 {
-	closesocket(this->ListenSocket);
 	WSACleanup();
 }
-
 
