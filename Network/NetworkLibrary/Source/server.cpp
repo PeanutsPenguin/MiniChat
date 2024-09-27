@@ -185,7 +185,25 @@ void Server::sendMessagetoServ(uint64_t* sender, std::string msg)
 	}
 }
 
+void Server::newConnectionMsg(uint64_t* newfd, char* nameBuffer)
+{
+	if (this->receiveMessage(newfd, nameBuffer, 100))
+	{
+		std::string name = nameBuffer;
+		std::string userThere = "User already there : ";
+		std::string justConnect = name + " just joined us";
 	
+		for (int j = 0; j < this->names.size(); j++)
+			userThere += this->names[j] + ", ";
+
+		this->addUserName(name);
+
+		this->sendMessagetoServ(newfd, justConnect);
+
+		if (send(*newfd, userThere.c_str(), (int)userThere.length(), 0) == -1)
+		{
+			errorHandler::reportWindowsError(TEXT("SEND TO NEW USER ERROR"), WSAGetLastError());
+			this->removeUser((int)this->fds.size() - 1);
 }
 }
 }
