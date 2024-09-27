@@ -75,6 +75,12 @@ void handleEvent(client newClient, std::string name)
 
 bool keyboardEvent(KEY_EVENT_RECORD input, std::stringstream* msg, client* newClient, std::string name, int* index)
 {
+    if (input.wVirtualKeyCode == VK_RIGHT)
+    {
+        if(*index < msg->str().length())
+        {
+            std::cout << "\033[1C";
+            *index += 1;
         }
         
     }
