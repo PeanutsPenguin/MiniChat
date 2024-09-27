@@ -90,6 +90,13 @@ private:
 	/// <returns> true if the server has to close</returns>
 	bool clearServer(char* buf);
 
+	/// <summary>
+	/// Create either a lsiten sckt ipv4 or ipv6 depending on what you send
+	/// </summary>
+	/// <param name="port">port of the server</param>
+	/// <param name="ipv">6 or 4</param>
+	void createSckt(const char* port, int ipv);
+
 	uint64_t ListenSocket4;
 	uint64_t ListenSocket6;
 	std::vector<struct pollfd> fds;

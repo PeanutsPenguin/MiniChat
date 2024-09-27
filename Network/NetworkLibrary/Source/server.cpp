@@ -16,83 +16,9 @@ Server::Server()
 
 void Server::CreateBindListen(const char* port)
 {
-	struct addrinfo* res = NULL, hints;
-	char ipstr[INET6_ADDRSTRLEN];
+	this->createSckt(port, 4);
 
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = AI_PASSIVE;
-
-	int resultCheck = getaddrinfo(NULL, port, &hints, &res);
-
-	if (resultCheck != 0)
-		errorHandler::reportWindowsError("getaddrinfo failed: %d\n", resultCheck);
-
-	this->ListenSocket4 = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-
-	if (this->ListenSocket4 == INVALID_SOCKET) {
-		errorHandler::reportWindowsError("Error at socket(): %ld\n", WSAGetLastError());
-		freeaddrinfo(res);
-	}
-
-	resultCheck = bind(this->ListenSocket4, res->ai_addr, (int)res->ai_addrlen);
-	if (resultCheck == SOCKET_ERROR) {
-		errorHandler::reportWindowsError("bind failed with error: %d\n", WSAGetLastError());
-		freeaddrinfo(res);
-		closesocket(this->ListenSocket4);
-	}
-	
-	if (listen(this->ListenSocket4, SOMAXCONN ) == SOCKET_ERROR) {
-		errorHandler::reportWindowsError("Listen failed with error: %ld\n", WSAGetLastError());
-		closesocket(this->ListenSocket4);
-	}
-
-	this->addPfds(this->ListenSocket4);
-
-	// convert the IP to a string and print it:
-	struct sockaddr_in* ipv4 = (struct sockaddr_in*)res->ai_addr;
-	inet_ntop(AF_INET, &(ipv4->sin_addr), ipstr, INET_ADDRSTRLEN);
-	printf("  IPV4: %s\n", ipstr);
-
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET6;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = AI_PASSIVE;
-
-	resultCheck = getaddrinfo(NULL, port, &hints, &res);
-
-	if (resultCheck != 0)
-		errorHandler::reportWindowsError("getaddrinfo failed: %d\n", resultCheck);
-
-	this->ListenSocket6 = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-
-	if (this->ListenSocket6 == INVALID_SOCKET) {
-		errorHandler::reportWindowsError("Error at socket(): %ld\n", WSAGetLastError());
-		freeaddrinfo(res);
-	}
-
-	resultCheck = bind(this->ListenSocket6, res->ai_addr, (int)res->ai_addrlen);
-	if (resultCheck == SOCKET_ERROR) {
-		errorHandler::reportWindowsError("bind failed with error: %d\n", WSAGetLastError());
-		freeaddrinfo(res);
-		closesocket(this->ListenSocket6);
-	}
-
-	if (listen(this->ListenSocket6, SOMAXCONN) == SOCKET_ERROR) {
-		errorHandler::reportWindowsError("Listen failed with error: %ld\n", WSAGetLastError());
-		closesocket(this->ListenSocket6);
-	}
-
-	this->addPfds(this->ListenSocket6);
-
-	struct sockaddr_in* ipv6 = (struct sockaddr_in*)res->ai_addr;
-	inet_ntop(AF_INET6, &(ipv6->sin_addr), ipstr, INET6_ADDRSTRLEN);
-	printf("  IPV6: %s\n", ipstr);
-
-	freeaddrinfo(res);
+	this->createSckt(port, 6);
 }
 
 void Server::addPfds(uint64_t toAdd)
@@ -244,6 +170,55 @@ bool Server::clearServer(char* buf)
 	return false;
 }
 
+void Server::createSckt(const char* port, int ipv)
+{
+	struct addrinfo* res = NULL, hints;
+	char ipstr[INET6_ADDRSTRLEN];
+
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = (ipv == 4 ? AF_INET: AF_INET6);
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags = AI_PASSIVE;
+
+	int resultCheck = getaddrinfo(NULL, port, &hints, &res);
+
+	if (resultCheck != 0)
+		errorHandler::reportWindowsError("getaddrinfo failed: %d\n", resultCheck);
+	
+	(ipv == 4 ? this->ListenSocket4 : this->ListenSocket6) = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+	SOCKET temp = (ipv == 4 ? this->ListenSocket4 : this->ListenSocket6);
+
+	if (temp == INVALID_SOCKET) 
+	{
+		errorHandler::reportWindowsError("Error at socket(): %ld\n", WSAGetLastError());
+		freeaddrinfo(res);
+	}
+
+	resultCheck = bind((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6), res->ai_addr, (int)res->ai_addrlen);
+	
+	if (resultCheck == SOCKET_ERROR) {
+		errorHandler::reportWindowsError("bind failed with error: %d\n", WSAGetLastError());
+		freeaddrinfo(res);
+		closesocket((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6));
+	}
+
+	if (listen((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6), SOMAXCONN) == SOCKET_ERROR) {
+		errorHandler::reportWindowsError("Listen failed with error: %ld\n", WSAGetLastError());
+		closesocket((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6));
+	}
+
+	this->addPfds((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6));
+
+	// convert the IP to a string and print it:
+	struct sockaddr_in* ipv4 = (struct sockaddr_in*)res->ai_addr;
+	inet_ntop((ipv == 4 ? AF_INET : AF_INET6), &(ipv4->sin_addr), ipstr, (ipv == 4 ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN));
+	printf("  IP: %s\n", ipstr);
+
+	freeaddrinfo(res);
+}
+
 void Server::pollCall()
 {
 	SOCKET newfd;        
@@ -309,11 +284,9 @@ void Server::pollCall()
 					else
 						this->deleteUserName(i);
 				}
-			}
-			
+			}	
 		}
 	}
-
 }
 
 Server::~Server()
