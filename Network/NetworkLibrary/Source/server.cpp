@@ -10,7 +10,8 @@ Server::Server()
 	else
 		errorHandler::consolPrint("SERVER'S OPEN\n");
 
-	this->ListenSocket = INVALID_SOCKET;
+	this->ListenSocket4 = INVALID_SOCKET;
+	this->ListenSocket6 = INVALID_SOCKET;
 }
 
 
@@ -29,26 +30,58 @@ void Server::CreateBindListen(const char* port)
 	if (resultCheck != 0)
 		errorHandler::reportWindowsError("getaddrinfo failed: %d\n", resultCheck);
 
-	this->ListenSocket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	this->ListenSocket4 = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
-	if (this->ListenSocket == INVALID_SOCKET) {
+	if (this->ListenSocket4 == INVALID_SOCKET) {
 		errorHandler::reportWindowsError("Error at socket(): %ld\n", WSAGetLastError());
 		freeaddrinfo(res);
 	}
 
-	resultCheck = bind(this->ListenSocket, res->ai_addr, (int)res->ai_addrlen);
+	resultCheck = bind(this->ListenSocket4, res->ai_addr, (int)res->ai_addrlen);
 	if (resultCheck == SOCKET_ERROR) {
 		errorHandler::reportWindowsError("bind failed with error: %d\n", WSAGetLastError());
 		freeaddrinfo(res);
-		closesocket(this->ListenSocket);
+		closesocket(this->ListenSocket4);
 	}
 	
-	if (listen(this->ListenSocket, SOMAXCONN ) == SOCKET_ERROR) {
+	if (listen(this->ListenSocket4, SOMAXCONN ) == SOCKET_ERROR) {
 		errorHandler::reportWindowsError("Listen failed with error: %ld\n", WSAGetLastError());
-		closesocket(this->ListenSocket);
+		closesocket(this->ListenSocket4);
 	}
 
-	this->addPfds(this->ListenSocket);
+	this->addPfds(this->ListenSocket4);
+
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags = AI_PASSIVE;
+
+	resultCheck = getaddrinfo(NULL, port, &hints, &res);
+
+	if (resultCheck != 0)
+		errorHandler::reportWindowsError("getaddrinfo failed: %d\n", resultCheck);
+
+	this->ListenSocket6 = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+	if (this->ListenSocket6 == INVALID_SOCKET) {
+		errorHandler::reportWindowsError("Error at socket(): %ld\n", WSAGetLastError());
+	freeaddrinfo(res);
+}
+
+	resultCheck = bind(this->ListenSocket6, res->ai_addr, (int)res->ai_addrlen);
+	if (resultCheck == SOCKET_ERROR) {
+		errorHandler::reportWindowsError("bind failed with error: %d\n", WSAGetLastError());
+		freeaddrinfo(res);
+		closesocket(this->ListenSocket6);
+	}
+
+	if (listen(this->ListenSocket6, SOMAXCONN) == SOCKET_ERROR) {
+		errorHandler::reportWindowsError("Listen failed with error: %ld\n", WSAGetLastError());
+		closesocket(this->ListenSocket6);
+	}
+
+	this->addPfds(this->ListenSocket6);
 
 	freeaddrinfo(res);
 }
