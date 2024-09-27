@@ -106,10 +106,10 @@ void Server::addUserName(std::string name)
 	this->names.push_back(name);
 }
 
-
-	for(;;)
+void Server::deleteUserName(int index)
 	{
-		int poll_count = WSAPoll(&this->fds[0], (u_long)this->fds.size(), -1);
+	this->names.erase(std::next(this->names.begin(), index - 2));
+}
 
 		if(poll_count == -1)
 		{
