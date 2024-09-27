@@ -116,14 +116,28 @@ bool keyboardEvent(KEY_EVENT_RECORD input, std::stringstream* msg, client* newCl
     }
     else 
     {
-        *index += 1;
+        int length = (int)msg->str().length();
         char key = (char)input.uChar.UnicodeChar;
 
         if(key != NULL && key != '\0')
         {
-            *msg << key;
-            std::cout << key;
+            if (*index < length)
+            {
+                msg->seekp(*index);
+                *msg << key;
+                std::cout << key;
+                msg->seekp(msg->end);
+            }
+            else 
+            {
+                *msg << key;
+                std::cout << key;
+            }
+
+            *index += 1;
         }
+
+        
     }
 
     return false;
