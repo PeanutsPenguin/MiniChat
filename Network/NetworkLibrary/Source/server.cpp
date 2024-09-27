@@ -111,10 +111,13 @@ void Server::deleteUserName(int index)
 	this->names.erase(std::next(this->names.begin(), index - 2));
 }
 
-		if(poll_count == -1)
+void Server::removeUser(int index)
 		{
-			errorHandler::consolPrint("POLL ERROR");
-			break;
+	closesocket(this->fds[index].fd);
+
+	this->removefds(index);
+
+	this->deleteUserName(index);
 		}
 
 		for(int i = 0; i < this->fds.size(); i++)
