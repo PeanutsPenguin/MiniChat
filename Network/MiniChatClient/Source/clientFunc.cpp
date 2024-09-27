@@ -97,6 +97,21 @@ bool keyboardEvent(KEY_EVENT_RECORD input, std::stringstream* msg, client* newCl
 
         *msg << " ";
         
+        msg->seekp(-1, msg->cur);
+    }
+    else if (input.wVirtualKeyCode == VK_RETURN)
+    {
+        if (msg->str() == "/quit")
+            return true;
+        
+        *index = 0;
+
+        newClient->sendMessaage(msg->str().c_str(), (int)msg->str().length());
+
+        std::cout << '\n';
+
+        msg->str("");
+    }
     }
 
     return false;
