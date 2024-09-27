@@ -57,8 +57,7 @@ private:
 	/// </summary>
 	/// <param name="addrlen">length of the address</param>
 	/// <param name="newfd">Socket for te new connection</param>
-	/// <param name="choice">6 if it's an ipv6 and 4 if it's and ipv4</param>
-	void newConnection(int* addrlen, uint64_t* newfd, int choice);
+	void newConnection(int* addrlen, uint64_t* newfd);
 
 	/// <summary>
 	/// Handle the receive of a message correctly
@@ -94,10 +93,8 @@ private:
 	/// Create either a lsiten sckt ipv4 or ipv6 depending on what you send
 	/// </summary>
 	/// <param name="port">port of the server</param>
-	/// <param name="ipv">6 or 4</param>
-	void createSckt(const char* port, int ipv);
+	void createSckt(const char* port);
 
-	uint64_t ListenSocket4;
 	uint64_t ListenSocket6;
 	std::vector<struct pollfd> fds;
 	std::vector<std::string> names;

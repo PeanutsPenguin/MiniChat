@@ -10,15 +10,12 @@ Server::Server()
 	else
 		errorHandler::consolPrint("SERVER'S OPEN\n");
 
-	this->ListenSocket4 = INVALID_SOCKET;
 	this->ListenSocket6 = INVALID_SOCKET;
 }
 
 void Server::CreateBindListen(const char* port)
 {
-	this->createSckt(port, 4);
-
-	this->createSckt(port, 6);
+	this->createSckt(port);
 }
 
 void Server::addPfds(uint64_t toAdd)
@@ -43,7 +40,7 @@ void Server::addUserName(std::string name)
 
 void Server::deleteUserName(int index)
 {
-	this->names.erase(std::next(this->names.begin(), index - 2));
+	this->names.erase(std::next(this->names.begin(), index - 1));
 }
 
 void Server::removeUser(int index)
@@ -55,16 +52,13 @@ void Server::removeUser(int index)
 	this->deleteUserName(index);
 }
 
-void Server::newConnection(int* addrlen, uint64_t* newfd, int choice)
+void Server::newConnection(int* addrlen, uint64_t* newfd)
 {
 	struct sockaddr_storage remoteaddr;
 
 	*addrlen = sizeof remoteaddr;
 
-	if(choice == 4)
-		*newfd = accept(this->ListenSocket4, (struct sockaddr*)&remoteaddr, addrlen);
-	else 
-		*newfd = accept(this->ListenSocket6, (struct sockaddr*)&remoteaddr, addrlen);
+	*newfd = accept(this->ListenSocket6, (struct sockaddr*)&remoteaddr, addrlen);
 
 	if (*newfd == -1)
 		errorHandler::reportWindowsError("accept ERROR\n", WSAGetLastError());
@@ -109,7 +103,7 @@ void Server::sendMessagetoServ(uint64_t* sender, std::string msg)
 	{
 		SOCKET dest_sckt = this->fds[i].fd;
 
-		if (dest_sckt != this->ListenSocket4 && dest_sckt != *sender && dest_sckt != this->ListenSocket6)
+		if (dest_sckt != *sender && dest_sckt != this->ListenSocket6)
 		{
 			if (send(dest_sckt, msg.c_str(), (int)msg.length(), 0) == -1)
 			{
@@ -170,13 +164,12 @@ bool Server::clearServer(char* buf)
 	return false;
 }
 
-void Server::createSckt(const char* port, int ipv)
+void Server::createSckt(const char* port)
 {
 	struct addrinfo* res = NULL, hints;
-	char ipstr[INET6_ADDRSTRLEN];
 
 	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = (ipv == 4 ? AF_INET: AF_INET6);
+	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_flags = AI_PASSIVE;
@@ -186,35 +179,34 @@ void Server::createSckt(const char* port, int ipv)
 	if (resultCheck != 0)
 		errorHandler::reportWindowsError("getaddrinfo failed: %d\n", resultCheck);
 	
-	(ipv == 4 ? this->ListenSocket4 : this->ListenSocket6) = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	this->ListenSocket6 = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
-	SOCKET temp = (ipv == 4 ? this->ListenSocket4 : this->ListenSocket6);
-
-	if (temp == INVALID_SOCKET) 
+	if (this->ListenSocket6 == INVALID_SOCKET) 
 	{
 		errorHandler::reportWindowsError("Error at socket(): %ld\n", WSAGetLastError());
 		freeaddrinfo(res);
 	}
 
-	resultCheck = bind((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6), res->ai_addr, (int)res->ai_addrlen);
+	int disable = 0;
+	int result = setsockopt(this->ListenSocket6, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&disable, sizeof(disable));
+	if (result == SOCKET_ERROR)
+		errorHandler::reportWindowsError("SOCKET OPTION ERR:", WSAGetLastError());
+
+	resultCheck = bind(this->ListenSocket6, res->ai_addr, (int)res->ai_addrlen);
 	
-	if (resultCheck == SOCKET_ERROR) {
+	if (resultCheck == SOCKET_ERROR) 
+	{
 		errorHandler::reportWindowsError("bind failed with error: %d\n", WSAGetLastError());
 		freeaddrinfo(res);
-		closesocket((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6));
+		closesocket(this->ListenSocket6);
 	}
 
-	if (listen((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6), SOMAXCONN) == SOCKET_ERROR) {
+	if (listen(this->ListenSocket6, SOMAXCONN) == SOCKET_ERROR) {
 		errorHandler::reportWindowsError("Listen failed with error: %ld\n", WSAGetLastError());
-		closesocket((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6));
+		closesocket(this->ListenSocket6);
 	}
 
-	this->addPfds((ipv == 4 ? this->ListenSocket4 : this->ListenSocket6));
-
-	// convert the IP to a string and print it:
-	struct sockaddr_in* ipv4 = (struct sockaddr_in*)res->ai_addr;
-	inet_ntop((ipv == 4 ? AF_INET : AF_INET6), &(ipv4->sin_addr), ipstr, (ipv == 4 ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN));
-	printf("  IP: %s\n", ipstr);
+	this->addPfds(this->ListenSocket6);
 
 	freeaddrinfo(res);
 }
@@ -241,26 +233,19 @@ void Server::pollCall()
 		{
 			if(this->fds[i].revents & POLLERR | this->fds[i].revents & POLLHUP)
 			{
-				std::string msg = this->names[i - 2];
+				std::string msg = this->names[i - 1];
 				this->removeUser(i);
 				msg += " has been disconnected";
 
-				this->sendMessagetoServ(&this->ListenSocket4, msg);
+				this->sendMessagetoServ(&this->ListenSocket6, msg);
 			}
 				
 
 			else if (this->fds[i].revents & POLLIN)
 			{
-				if (fds[i].fd == this->ListenSocket4)
+				if (fds[i].fd == this->ListenSocket6)
 				{
-					this->newConnection(&addrlen, &newfd, 4);
-
-					this->newConnectionMsg(&newfd, &nameBuffer[0]);
-				}
-
-				else if (fds[i].fd == this->ListenSocket6)
-				{
-					this->newConnection(&addrlen, &newfd, 6);
+					this->newConnection(&addrlen, &newfd);
 
 					this->newConnectionMsg(&newfd, &nameBuffer[0]);
 				}
@@ -274,7 +259,7 @@ void Server::pollCall()
 						if (this->clearServer(receiveBuf))
 							return;
 
-						buf = this->names[i - 2] + " > " + receiveBuf;
+						buf = this->names[i - 1] + " > " + receiveBuf;
 
 						errorHandler::consolPrint(buf.c_str());
 						errorHandler::consolPrint("\n");
