@@ -9,21 +9,43 @@ struct pollfd;
 class client
 {
 public:
-	client();
+	client();		//Client default constructor
+	
+	/// <summary>
+	/// Create a socket with an adress and a name requested
+	/// </summary>
+	/// <param name="port"> :current server port</param>
+	/// <returns>your userName</returns>
+	std::string CreateAndConnect(const char* port);
 
-	void CreateAndConnect(const char* ipAdress, const char* port);
+	/// <summary>
+	/// Create a read event to know when the client is ready to receive a messgae
+	/// </summary>
+	/// <returns>the HANDLE type of the event</returns>
+	HANDLE createReadEvent();
 
-	void createEvent();
-
+	/// <summary>
+	/// Send a message to the connected server
+	/// </summary>
+	/// <param name="msg">Buffer that contains your message</param>
+	/// <param name="length">length of the buffer</param>
 	void sendMessaage(const char* msg, int length);
+	
+	/// <summary>
+	/// Handle the reception of a message corerctly
+	/// </summary>
+	/// <returns>Return a boolean to know if the client have to close</returns>
+	bool receivemessage();
 
-	void receivemessage();
+	/// <summary>
+	/// Getter for the read event
+	/// </summary>
+	/// <returns>the read event</returns>
+	HANDLE getReadEvent();
 
-	HANDLE getEvent();
-
-	~client();
+	~client();		//Default destructor
 
 private:
-	uint64_t data;
-	HANDLE sckt_event;
+	uint64_t data;		//Socket of the client
+	HANDLE read_event;		//Read event for the client
 };
