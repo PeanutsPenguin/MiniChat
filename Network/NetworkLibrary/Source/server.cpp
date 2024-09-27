@@ -140,18 +140,40 @@ void Server::newConnection(int* addrlen, uint64_t* newfd, int choice)
 					}
 				}
 				
-				else 
+bool Server::receiveMessage(uint64_t* newfd, char* buf, int bufSize)
 				{
-					int nbytes = recv(this->fds[i].fd, buf, sizeof buf, 0);
+	int nbytes = recv(*newfd, buf, bufSize, 0);
 
-					SOCKET sender = this->fds[i].fd;
-
-					if(nbytes <= 0)
+	if (nbytes <= 0)
 					{
 						if (nbytes == 0)
 							errorHandler::consolPrint("Connection closed\n");
 						else
-							errorHandler::consolPrint("RECEIVE ERROR\n");
+			errorHandler::reportWindowsError("RECEIVE ERROR\n", WSAGetLastError());
+
+		closesocket(*newfd);
+
+		this->removefds((int)this->fds.size() - 1);
+
+		return false;
+	}
+	else 
+	{
+		if (nbytes >= bufSize)
+			buf[bufSize - 1] = '\0';
+		else
+			buf[nbytes] = '\0';
+
+		return true;
+	}
+
+	
+}
+
+	
+}
+}
+}
 
 						closesocket(this->fds[i].fd);
 
