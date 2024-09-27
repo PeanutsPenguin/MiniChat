@@ -143,7 +143,7 @@ bool Server::clearServer(char* buf)
 	std::string check = "/closeServer";
 	if (buf == check)
 	{
-		for (int i = 2; i < this->fds.size(); i++)
+		for (int i = 1; i < this->fds.size(); i++)
 		{
 			int iResult = shutdown(this->fds[i].fd, SD_SEND);
 
@@ -156,7 +156,6 @@ bool Server::clearServer(char* buf)
 		}
 
 		closesocket(this->fds[0].fd);
-		closesocket(this->fds[1].fd);
 
 		return true;
 	}

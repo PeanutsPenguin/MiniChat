@@ -102,7 +102,6 @@ std::string client::CreateAndConnect(const char* port)
 			
 	}
 
-
 	this->sendMessaage(name.c_str() + '\0', (int)name.length() + 1);
 
 	freeaddrinfo(res);
