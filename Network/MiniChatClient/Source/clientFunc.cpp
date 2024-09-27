@@ -1,5 +1,5 @@
 ﻿#include "clientFunc.h"
-
+#include <iostream>
 
 void handleEvent(client newClient, std::string name)
 {
@@ -14,12 +14,12 @@ void handleEvent(client newClient, std::string name)
 
     DWORD readevents;
     INPUT_RECORD records[128];
-    std::string message = name + " >";
+    std::stringstream message;
 
     HANDLE events[2];
 
     events[0] = hStdin;
-    events[1] = newClient.getEvent();
+    events[1] = newClient.getReadEvent();
 
     for (;;)
     {
@@ -30,7 +30,14 @@ void handleEvent(client newClient, std::string name)
         case WAIT_OBJECT_0:
             break;
         case WAIT_OBJECT_0 + 1:
-            newClient.receivemessage();
+            std::cout << "\033[1K" << '\r';
+            if (newClient.receivemessage())
+            {
+                isClosing = true;
+                std::cout << "SERVER HAS BEEN CLOSED";
+            }
+            else 
+                std::cout << message.str();
             break;
         default:
             continue;
