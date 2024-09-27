@@ -82,6 +82,12 @@ bool keyboardEvent(KEY_EVENT_RECORD input, std::stringstream* msg, client* newCl
             std::cout << "\033[1C";
             *index += 1;
         }
+    }
+    else if (input.wVirtualKeyCode == VK_LEFT)
+    {
+        *index -= 1;
+        std::cout << "\b";
+    }
         
     }
 
