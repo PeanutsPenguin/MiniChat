@@ -10,10 +10,10 @@ client::client()
 		errorHandler::reportWindowsError(TEXT("WSAStartup"), resultCheck);
 
     this->data = INVALID_SOCKET;
-    this->sckt_event = WSACreateEvent();
+    this->read_event = WSACreateEvent();
 }
 
-void client::CreateAndConnect(const char* ipAdress, const char* port)
+std::string client::CreateAndConnect(const char* port)
 {
 	std::string name = "";
 	std::string ipAdress = "";
@@ -27,7 +27,7 @@ void client::CreateAndConnect(const char* ipAdress, const char* port)
 	struct addrinfo* res = NULL, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;
+	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 
