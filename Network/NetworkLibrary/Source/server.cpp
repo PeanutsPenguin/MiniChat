@@ -101,12 +101,10 @@ void Server::removefds(int index)
 	this->fds.erase(std::next(this->fds.begin(), index));
 }
 
-void Server::pollCall()
+void Server::addUserName(std::string name)
 {
-	SOCKET newfd;        
-	struct sockaddr_storage remoteaddr; 
-	socklen_t addrlen;
-	char buf[512];
+	this->names.push_back(name);
+}
 
 
 	for(;;)
