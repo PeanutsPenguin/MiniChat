@@ -1,5 +1,6 @@
 #include "errorHandler.h"
 #include "client.h"
+#include <iostream>
 
 client::client()
 {
@@ -14,32 +15,94 @@ client::client()
 
 void client::CreateAndConnect(const char* ipAdress, const char* port)
 {
+	std::string name = "";
+	std::string ipAdress = "";
+
+	errorHandler::consolPrint("Enter a name : ");
+	std::cin >> name;
+
+	errorHandler::consolPrint("Enter an IP Adress : ");
+	std::cin >> ipAdress;
+
 	struct addrinfo* res = NULL, hints;
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = AI_PASSIVE;
 
-	int resultCheck = getaddrinfo(ipAdress, port, &hints, &res);
+	int resultCheck = getaddrinfo(ipAdress.c_str(), port, &hints, &res);
+	if(resultCheck != 0)
+		errorHandler::reportWindowsError("getaddrinfo ERR: \n", WSAGetLastError());
+
+	while (resultCheck != 0)
+	{
+		errorHandler::consolPrint("Enter an IP Adress : ");
+		std::cin >> ipAdress;
+
+		resultCheck = getaddrinfo(ipAdress.c_str(), port, &hints, &res);
 
 	if (resultCheck != 0)
-		errorHandler::reportWindowsError("getaddrinfo failed: %d\n", resultCheck);
+			errorHandler::reportWindowsError("getaddrinfo ERR: \n", WSAGetLastError());
+	}
 
 	this->data = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
-	if (this->data == INVALID_SOCKET) {
+	if (this->data == INVALID_SOCKET)
+	{
 		errorHandler::reportWindowsError("Error at socket(): \n", WSAGetLastError());
-		freeaddrinfo(res);
+		resultCheck = -1;
 	}
+	else
+		resultCheck = 0;
 
 	if (connect(this->data, res->ai_addr, (int)res->ai_addrlen) < 0)
+	{
 		errorHandler::reportWindowsError("UNABLE TO CONNECT\n", WSAGetLastError());
+		resultCheck = -1;
+	}
 	else
+	{
 		errorHandler::consolPrint("SUCCESSFULLY CONNECTED\n");
+		resultCheck = 0;
+	}
+
+
+	while (resultCheck != 0)
+	{
+		errorHandler::consolPrint("Enter an IP Adress : ");
+		std::cin >> ipAdress;
+
+		resultCheck = getaddrinfo(ipAdress.c_str(), port, &hints, &res);
+	this->data = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+		if (this->data == INVALID_SOCKET) 
+		{
+		errorHandler::reportWindowsError("Error at socket(): \n", WSAGetLastError());
+			resultCheck = -1;
+	}
+		else
+			resultCheck = 0;
+
+	if (connect(this->data, res->ai_addr, (int)res->ai_addrlen) < 0)
+		{
+		errorHandler::reportWindowsError("UNABLE TO CONNECT\n", WSAGetLastError());
+			resultCheck = -1;
+		}
+	else
+		{
+		errorHandler::consolPrint("SUCCESSFULLY CONNECTED\n");
+			resultCheck = 0;
+		}
+
+	}
+
+
+	this->sendMessaage(name.c_str() + '\0', (int)name.length() + 1);
 
 	freeaddrinfo(res);
+
+	return name;
 }
 
 void client::createEvent()
