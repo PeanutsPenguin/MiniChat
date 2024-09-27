@@ -88,6 +88,14 @@ bool keyboardEvent(KEY_EVENT_RECORD input, std::stringstream* msg, client* newCl
         *index -= 1;
         std::cout << "\b";
     }
+    else if (input.wVirtualKeyCode == VK_BACK)
+    {
+        *index -= 1;
+        std::cout << '\b' << ' ' << "\b";
+
+        msg->seekp(-1, msg->cur);
+
+        *msg << " ";
         
     }
 
