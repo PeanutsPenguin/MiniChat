@@ -42,7 +42,7 @@ std::string client::CreateAndConnect(const char* port)
 
 		resultCheck = getaddrinfo(ipAdress.c_str(), port, &hints, &res);
 
-	if (resultCheck != 0)
+		if (resultCheck != 0)
 			errorHandler::reportWindowsError("getaddrinfo ERR: \n", WSAGetLastError());
 	}
 
@@ -74,27 +74,27 @@ std::string client::CreateAndConnect(const char* port)
 		std::cin >> ipAdress;
 
 		resultCheck = getaddrinfo(ipAdress.c_str(), port, &hints, &res);
-	this->data = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		this->data = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
 		if (this->data == INVALID_SOCKET) 
 		{
-		errorHandler::reportWindowsError("Error at socket(): \n", WSAGetLastError());
+			errorHandler::reportWindowsError("Error at socket(): \n", WSAGetLastError());
 			resultCheck = -1;
-	}
+		}
 		else
 			resultCheck = 0;
 
-	if (connect(this->data, res->ai_addr, (int)res->ai_addrlen) < 0)
+		if (connect(this->data, res->ai_addr, (int)res->ai_addrlen) < 0)
 		{
-		errorHandler::reportWindowsError("UNABLE TO CONNECT\n", WSAGetLastError());
+			errorHandler::reportWindowsError("UNABLE TO CONNECT\n", WSAGetLastError());
 			resultCheck = -1;
 		}
-	else
+		else
 		{
-		errorHandler::consolPrint("SUCCESSFULLY CONNECTED\n");
+			errorHandler::consolPrint("SUCCESSFULLY CONNECTED\n");
 			resultCheck = 0;
 		}
-
+			
 	}
 
 
@@ -144,14 +144,12 @@ bool client::receivemessage()
 	return false;
 }
 
-HANDLE client::getEvent()
+HANDLE client::getReadEvent()
 {
-	return this->sckt_event;
+	return this->read_event;
 }
-
 
 client::~client()
 {
-	closesocket(this->data);
 	WSACleanup();
 }
