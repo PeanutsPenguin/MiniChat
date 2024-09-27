@@ -74,12 +74,16 @@ std::string client::CreateAndConnect(const char* port)
 		std::cin >> ipAdress;
 
 		resultCheck = getaddrinfo(ipAdress.c_str(), port, &hints, &res);
+		if (resultCheck != 0)
+			continue;
+
 		this->data = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
 		if (this->data == INVALID_SOCKET) 
 		{
 			errorHandler::reportWindowsError("Error at socket(): \n", WSAGetLastError());
 			resultCheck = -1;
+			continue;
 		}
 		else
 			resultCheck = 0;
@@ -88,6 +92,7 @@ std::string client::CreateAndConnect(const char* port)
 		{
 			errorHandler::reportWindowsError("UNABLE TO CONNECT\n", WSAGetLastError());
 			resultCheck = -1;
+			continue;
 		}
 		else
 		{
