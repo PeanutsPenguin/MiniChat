@@ -3,6 +3,9 @@
 
 void handleEvent(client newClient, std::string name)
 {
+    int index = 0;
+    bool isClosing = false;
+
     //Get the handle input mode
     HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
     if (hStdin == INVALID_HANDLE_VALUE)
@@ -50,20 +53,7 @@ void handleEvent(client newClient, std::string name)
                 break;
             case KEY_EVENT:
                 if (records[idx].Event.KeyEvent.bKeyDown)
-                {
-                    if (records[idx].Event.KeyEvent.uChar.UnicodeChar == '\r')
-                    {
-                        printf("\n");
-                        message += '\0';
-                        newClient.sendMessaage(message.c_str(), (int)message.length());
-                        message = name + " >";
-                    }
-                    else
-                    {
-                        message += (char)records[idx].Event.KeyEvent.uChar.UnicodeChar;
-                        printf("%c", records[idx].Event.KeyEvent.uChar.UnicodeChar);
-                    }
-                }
+                    isClosing = keyboardEvent(records[idx].Event.KeyEvent, &message, &newClient, name, &index);
                 break;
             case MENU_EVENT:
                 break;
@@ -72,6 +62,12 @@ void handleEvent(client newClient, std::string name)
             case WINDOW_BUFFER_SIZE_EVENT:
                 break;
             }
+        }
+
+        if (isClosing)
+            return;
+    }
+}
 
 bool keyboardEvent(KEY_EVENT_RECORD input, std::stringstream* msg, client* newClient, std::string name, int* index)
 {
