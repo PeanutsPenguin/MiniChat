@@ -119,21 +119,29 @@ void client::sendMessaage(const char* msg, int length)
 		errorHandler::reportWindowsError("SEND CLIENT ERR :", WSAGetLastError());
 }
 
-void client::receivemessage()
+bool client::receivemessage()
 {
 	char buf[512];
 
 	int byteReceive = recv(this->data, buf, 512, 0);
 	
-	if (byteReceive <= 0)
+	if (byteReceive < 0)
 		errorHandler::reportWindowsError("RECEIVE CLIENT ERR :", WSAGetLastError());
+	else if (byteReceive == 0)
+	{
+		WSAResetEvent(this->read_event);
+		return true;
+	}
+		
 	else
 	{
 		buf[byteReceive - (byteReceive == sizeof buf ? 1 : 0)] = '\0';
 		errorHandler::consolPrint(buf);
 	}
-	ResetEvent(this->sckt_event);
+
+	WSAResetEvent(this->read_event);
 	errorHandler::consolPrint("\n");
+	return false;
 }
 
 HANDLE client::getEvent()
