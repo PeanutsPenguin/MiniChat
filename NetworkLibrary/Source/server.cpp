@@ -230,6 +230,7 @@ void Server::pollCall()
 
 		for(int i = 0; i < this->fds.size(); i++)
 		{
+			//If the socket is disconnected
 			if(this->fds[i].revents & POLLERR | this->fds[i].revents & POLLHUP)
 			{
 				std::string msg = this->names[i - 1];
@@ -242,6 +243,7 @@ void Server::pollCall()
 
 			else if (this->fds[i].revents & POLLIN)
 			{
+				//If this is a new socket 
 				if (fds[i].fd == this->ListenSocket6)
 				{
 					this->newConnection(&addrlen, &newfd);
@@ -253,6 +255,7 @@ void Server::pollCall()
 				{
 					SOCKET sender = this->fds[i].fd;
 
+					//If this is a new message
 					if (this->receiveMessage(&this->fds[i].fd, &receiveBuf[0], 512))
 					{
 						if (this->clearServer(receiveBuf))
